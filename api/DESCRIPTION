@@ -1,0 +1,10 @@
+Type: API
+Title: AI SQL Chatbot API
+Version: 0.1.0
+Depends: R (>= 4.3)
+Imports:
+    plumber2,
+    ellmer,
+    DBI,
+    RSQLite,
+    jsonlite
