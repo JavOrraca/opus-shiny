@@ -1,0 +1,6 @@
+ANTHROPIC_API_KEY=your-api-key-here
+DB_PATH=../data/sample.sqlite
+# Optional: set to use API mode instead of direct ellmer mode
+# API_BASE_URL=http://localhost:8080
+# Optional: override the default Claude model
+# CLAUDE_MODEL=claude-sonnet-4-20250514
