@@ -8,13 +8,13 @@ package, with a modern React frontend and an R Shiny alternative interface.
 
 | Component | Tech Stack | Directory |
 |-----------|-----------|-----------|
-| **API Backend** | R, plumber2, ellmer | `api/` |
+| **API Backend** | R, plumber, ellmer | `api/` |
 | **Frontend** | React 19, Next.js 15, TypeScript, Tailwind CSS | `frontend/` |
 | **Shiny UI** | R, bslib, shinychat | `shiny/` |
 | **Sample Data** | SQLite (e-commerce demo) | `data/` |
 
 ```
-User → React Chat UI → plumber2 API → ellmer → Claude API
+User → React Chat UI → plumber API → ellmer → Claude API
                               ↓
                         SQLite Database
                               ↓
@@ -53,6 +53,10 @@ npm run dev
 # Frontend at http://localhost:3000
 ```
 
+> **Tip:** The React frontend works especially well inside the
+> [Positron](https://positron.posit.co/) IDE Viewer pane — open
+> `http://localhost:3000` there for an integrated development experience.
+
 ### 4b. Or start the Shiny interface
 
 ```bash
@@ -80,7 +84,7 @@ Set `ANTHROPIC_API_KEY` as an encrypted environment variable in Connect.
 
 ## Requirements
 
-- **R** >= 4.3 with packages: ellmer, plumber2, DBI, RSQLite, bslib, shinychat
+- **R** >= 4.3 with packages: ellmer, plumber, DBI, RSQLite, bslib, shinychat
 - **Node.js** >= 20 (for React frontend)
 - **Anthropic API key** from [console.anthropic.com](https://console.anthropic.com)
 
