@@ -11,7 +11,7 @@ and natural language summaries.
 
 ```
 ┌─────────────────────────┐     HTTP/JSON     ┌──────────────────────────┐
-│   React / Next.js SPA   │ ◄──────────────► │   plumber2 API (R)       │
+│   React / Next.js SPA   │ ◄──────────────► │   plumber API (R)        │
 │   (frontend/)           │                   │   (api/)                 │
 │                         │                   │                          │
 │  • Modern chat UI       │                   │  • ellmer ↔ Claude API   │
@@ -22,8 +22,8 @@ and natural language summaries.
                                                          │
 ┌─────────────────────────┐                              │
 │   Shiny (bslib) UI      │ ◄───── calls same API ──────┘
-│   (shiny/)              │        or embedded via        │
-│                         │        api_shiny()            │
+│   (shiny/)              │        or uses ellmer         │
+│                         │        directly               │
 │  • Alternative interface│                               │
 │  • shinychat widget     │                   ┌───────────▼──────────┐
 │  • Quick prototyping    │                   │   Database (SQLite/  │
@@ -35,7 +35,7 @@ and natural language summaries.
 
 | Directory    | Technology         | Purpose                                    |
 |-------------|--------------------|--------------------------------------------|
-| `api/`      | R, plumber2, ellmer| Core API — LLM chat, SQL gen, query exec   |
+| `api/`      | R, plumber, ellmer | Core API — LLM chat, SQL gen, query exec   |
 | `frontend/` | React, Next.js, TS | Modern chat UI (static export for Connect) |
 | `shiny/`    | R, bslib, shinychat| Alternative Shiny-based chat interface      |
 | `data/`     | R, SQLite/DuckDB   | Sample database and seed script            |
@@ -43,7 +43,7 @@ and natural language summaries.
 ### Deployment Target: Posit Connect
 
 - **React frontend**: Deployed as a static SPA (`next export`)
-- **plumber2 API**: Deployed via `rsconnect::deployAPI()`
+- **plumber API**: Deployed via `rsconnect::deployAPI()`
 - **Shiny app**: Deployed via `rsconnect::deployApp()` (optional)
 - All three are separate content items on Connect
 - API keys stored as encrypted environment variables on Connect
@@ -52,7 +52,7 @@ and natural language summaries.
 
 ### Prerequisites
 
-- R >= 4.3 with packages: `ellmer`, `plumber2`, `DBI`, `RSQLite`, `bslib`, `shinychat`
+- R >= 4.3 with packages: `ellmer`, `plumber`, `DBI`, `RSQLite`, `bslib`, `shinychat`
 - Node.js >= 20 with npm/pnpm
 - An Anthropic API key (set `ANTHROPIC_API_KEY` in `.Renviron`)
 
@@ -62,7 +62,7 @@ and natural language summaries.
 # 1. Create sample database
 Rscript data/create_db.R
 
-# 2. Start the plumber2 API (port 8080)
+# 2. Start the plumber API (port 8080)
 Rscript api/run.R
 
 # 3. Start the React frontend (port 3000)
@@ -75,21 +75,21 @@ cd frontend && npm install && npm run dev
 |---------------------|----------|--------------------------------------|
 | `ANTHROPIC_API_KEY` | Yes      | Claude API key from console.anthropic.com |
 | `DB_PATH`           | No       | Path to SQLite/DuckDB file (default: `data/sample.sqlite`) |
-| `API_PORT`          | No       | plumber2 API port (default: 8080)    |
-| `API_BASE_URL`      | No       | URL of plumber2 API for frontend     |
+| `API_PORT`          | No       | plumber API port (default: 8080)     |
+| `API_BASE_URL`      | No       | URL of plumber API for frontend      |
 
 ## Claude Team Agents
 
 This project is designed for multi-agent development. Each component has its
 own `CLAUDE.md` with domain-specific instructions:
 
-- **`api/CLAUDE.md`** — R API agent: plumber2 routes, ellmer integration, SQL safety
+- **`api/CLAUDE.md`** — R API agent: plumber routes, ellmer integration, SQL safety
 - **`frontend/CLAUDE.md`** — Frontend agent: React/Next.js, TypeScript, chat UX
 - **`shiny/CLAUDE.md`** — Shiny agent: bslib layouts, shinychat, reactive patterns
 
 ## Key Design Decisions
 
-1. **plumber2 (not plumber v1)** — Modern R API framework with better routing and Shiny embedding
+1. **plumber (stable v1)** — Proven R API framework with decorator syntax, widely deployed on Posit Connect
 2. **ellmer for LLM** — Tidyverse-maintained, consistent interface, tool-use support
 3. **Static Next.js export** — Required for Posit Connect (no Node.js runtime on Connect)
 4. **SQLite for demo** — Zero-config database; swap for DuckDB/Postgres in production
