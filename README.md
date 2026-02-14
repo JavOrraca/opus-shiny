@@ -40,7 +40,8 @@ Rscript data/create_db.R
 ### 3. Start the API
 
 ```bash
-Rscript api/run.R
+cd api
+Rscript run.R
 # API running at http://localhost:8080
 ```
 
