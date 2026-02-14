@@ -14,15 +14,17 @@ export function SqlPreview({ sql, defaultExpanded = true }: SqlPreviewProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [isCopied, setIsCopied] = useState(false);
 
+  const sqlString = typeof sql === "string" ? sql : String(sql ?? "");
+
   const handleCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(sql);
+      await navigator.clipboard.writeText(sqlString);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch {
       // Fallback for older browsers
       const textarea = document.createElement("textarea");
-      textarea.value = sql;
+      textarea.value = sqlString;
       textarea.style.position = "fixed";
       textarea.style.opacity = "0";
       document.body.appendChild(textarea);
@@ -32,9 +34,9 @@ export function SqlPreview({ sql, defaultExpanded = true }: SqlPreviewProps) {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     }
-  }, [sql]);
+  }, [sqlString]);
 
-  const formattedSql = sql.trim();
+  const formattedSql = sqlString.trim();
 
   return (
     <div className="mt-3 rounded-lg border border-border overflow-hidden bg-code-bg">

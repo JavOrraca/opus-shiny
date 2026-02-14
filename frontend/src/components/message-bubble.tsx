@@ -57,7 +57,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
 
         {/* SQL Query block (outside the bubble for better layout) */}
-        {message.sqlQuery && <SqlPreview sql={message.sqlQuery} />}
+        {message.sqlQuery && typeof message.sqlQuery === "string" && message.sqlQuery.trim() !== "" && (
+          <SqlPreview sql={message.sqlQuery} />
+        )}
 
         {/* Explanation text */}
         {message.explanation && message.explanation !== message.content && (
