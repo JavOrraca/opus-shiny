@@ -1,0 +1,24 @@
+Type: ShinyApp
+Title: AI SQL Chatbot
+Version: 0.2.0
+Description: A Shiny app for natural language to SQL data analysis, powered
+    by Claude (Anthropic) via the ellmer package. Ask questions about your
+    data in plain English and get SQL queries, results, and summaries.
+    Supports SQLite, DuckDB (for tibbles/dataframes), and remote databases
+    via ADBC (Arrow Database Connectivity).
+Authors@R: person("Javier", "Orraca-Deatcu", role = c("aut", "cre"))
+Depends: R (>= 4.3)
+Imports:
+    shiny,
+    bslib,
+    shinychat,
+    ellmer,
+    DBI,
+    RSQLite,
+    reactable,
+    htmltools,
+    jsonlite
+Suggests:
+    duckdb,
+    adbi,
+    adbcdrivermanager

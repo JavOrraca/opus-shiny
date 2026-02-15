@@ -1,3 +1,0 @@
-ANTHROPIC_API_KEY=your-api-key-here
-DB_PATH=../data/sample.sqlite
-API_PORT=8080
