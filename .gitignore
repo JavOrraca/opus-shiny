@@ -4,13 +4,6 @@
 .RData
 .Renviron
 *.Rproj
-renv/library/
-renv/staging/
-
-# Node
-node_modules/
-.next/
-out/
 
 # Database
 *.sqlite

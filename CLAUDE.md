@@ -1,97 +1,119 @@
-# AI SQL Chatbot — Natural Language to SQL Data Analysis
+# AI SQL Chatbot -- Agent Instructions
 
-## Project Overview
+## Overview
 
-A template application for natural language to SQL data analysis, powered by
-Claude (Anthropic) via R's `ellmer` package. The app lets users ask questions
-about their data in plain English and receives SQL queries, executed results,
-and natural language summaries.
+A Shiny app for natural language to SQL data analysis, powered by Claude
+(Anthropic) via R's `ellmer` package. Users ask questions in plain English,
+Claude generates SQL via tool calling, the query executes against the
+database, and results are displayed with a natural language summary.
 
 ## Architecture
 
 ```
-┌─────────────────────────┐     HTTP/JSON     ┌──────────────────────────┐
-│   React / Next.js SPA   │ ◄──────────────► │   plumber API (R)        │
-│   (frontend/)           │                   │   (api/)                 │
-│                         │                   │                          │
-│  • Modern chat UI       │                   │  • ellmer ↔ Claude API   │
-│  • Data tables          │                   │  • SQL generation        │
-│  • SQL syntax preview   │                   │  • Query execution       │
-│  • Chart rendering      │                   │  • Database connections   │
-└─────────────────────────┘                   └──────────┬───────────────┘
-                                                         │
-┌─────────────────────────┐                              │
-│   Shiny (bslib) UI      │ ◄───── calls same API ──────┘
-│   (shiny/)              │        or uses ellmer         │
-│                         │        directly               │
-│  • Alternative interface│                               │
-│  • shinychat widget     │                   ┌───────────▼──────────┐
-│  • Quick prototyping    │                   │   Database (SQLite/  │
-└─────────────────────────┘                   │   DuckDB/Postgres)   │
-                                              └──────────────────────┘
+User question (plain English)
+        |
+        v
+shinychat (chat UI widget)
+        |
+        v
+ellmer chat_anthropic() + stream_async()
+        |
+        v
+Claude decides to call execute_sql tool
+        |
+        v
+R/tool_sql.R validates + executes via DBI
+        |
+        v
+Results -> Claude summarises -> chat + reactable table
 ```
 
-### Components
+### File Structure
 
-| Directory    | Technology         | Purpose                                    |
-|-------------|--------------------|--------------------------------------------|
-| `api/`      | R, plumber, ellmer | Core API — LLM chat, SQL gen, query exec   |
-| `frontend/` | React, Next.js, TS | Modern chat UI (static export for Connect) |
-| `shiny/`    | R, bslib, shinychat| Alternative Shiny-based chat interface      |
-| `data/`     | R, SQLite/DuckDB   | Sample database and seed script            |
-
-### Deployment Target: Posit Connect
-
-- **React frontend**: Deployed as a static SPA (`next export`)
-- **plumber API**: Deployed via `rsconnect::deployAPI()`
-- **Shiny app**: Deployed via `rsconnect::deployApp()` (optional)
-- All three are separate content items on Connect
-- API keys stored as encrypted environment variables on Connect
-
-## Development Setup
-
-### Prerequisites
-
-- R >= 4.3 with packages: `ellmer`, `plumber`, `DBI`, `RSQLite`, `bslib`, `shinychat`
-- Node.js >= 20 with npm/pnpm
-- An Anthropic API key (set `ANTHROPIC_API_KEY` in `.Renviron`)
-
-### Quick Start
-
-```bash
-# 1. Create sample database
-Rscript data/create_db.R
-
-# 2. Start the plumber API (port 8080)
-Rscript api/run.R
-
-# 3. Start the React frontend (port 3000)
-cd frontend && npm install && npm run dev
 ```
-
-## Environment Variables
-
-| Variable             | Required | Description                          |
-|---------------------|----------|--------------------------------------|
-| `ANTHROPIC_API_KEY` | Yes      | Claude API key from console.anthropic.com |
-| `DB_PATH`           | No       | Path to SQLite/DuckDB file (default: `data/sample.sqlite`) |
-| `API_PORT`          | No       | plumber API port (default: 8080)     |
-| `API_BASE_URL`      | No       | URL of plumber API for frontend      |
-
-## Claude Team Agents
-
-This project is designed for multi-agent development. Each component has its
-own `CLAUDE.md` with domain-specific instructions:
-
-- **`api/CLAUDE.md`** — R API agent: plumber routes, ellmer integration, SQL safety
-- **`frontend/CLAUDE.md`** — Frontend agent: React/Next.js, TypeScript, chat UX
-- **`shiny/CLAUDE.md`** — Shiny agent: bslib layouts, shinychat, reactive patterns
+app.R                 # Shiny UI + server (sources R/*.R)
+R/
+  database.R          # Connection layer: connect_sqlite(), connect_tibble(),
+                      #   connect_adbc(), get_connection(), validate_query()
+  schema.R            # get_db_schema() -- DBI-generic, no SQLite PRAGMA
+  tool_sql.R          # create_sql_tool() -- ellmer tool() for SQL execution
+data/
+  create_db.R         # Sample e-commerce SQLite database generator
+renv.lock             # Locked package versions (reproducibility)
+renv/
+  activate.R          # renv bootstrap script (committed to git)
+  settings.json       # renv project settings
+DESCRIPTION           # Dependency declarations (read by renv in explicit mode)
+.Rprofile             # Activates renv on R startup
+.Renviron.example     # Environment variable template
+```
 
 ## Key Design Decisions
 
-1. **plumber (stable v1)** — Proven R API framework with decorator syntax, widely deployed on Posit Connect
-2. **ellmer for LLM** — Tidyverse-maintained, consistent interface, tool-use support
-3. **Static Next.js export** — Required for Posit Connect (no Node.js runtime on Connect)
-4. **SQLite for demo** — Zero-config database; swap for DuckDB/Postgres in production
-5. **Read-only SQL** — LLM generates SELECT-only queries; never mutates data
-6. **API key as env var** — Never hardcoded; use Connect's encrypted env vars in production
+1. **ellmer tool()** -- Claude calls `execute_sql` directly via tool use
+   instead of outputting SQL in markdown fences. More reliable than regex.
+2. **stream_async()** -- Non-blocking streaming in Shiny so the UI stays
+   responsive during Claude's response.
+3. **DBI-generic** -- Schema introspection uses `dbListTables()` +
+   `dbColumnInfo()`, not SQLite-specific PRAGMA. Works with any backend.
+4. **Three database tiers** -- SQLite (zero-config), DuckDB (for tibbles),
+   ADBC (remote databases). Only SQLite is required; others are optional.
+5. **Read-only safety** -- `validate_query()` rejects non-SELECT statements.
+   Defence in depth: system prompt instructs Claude, tool function validates.
+6. **Bootstrap 5 dark theme** -- via `bslib::bs_theme()` with custom palette.
+7. **renv for reproducibility** -- `renv.lock` pins exact package versions.
+   Uses "explicit" snapshot type (reads from DESCRIPTION Imports).
+   After adding/updating packages, run `renv::snapshot()` to update the lockfile.
+
+## Coding Style
+
+- Tidyverse conventions throughout
+- Use the base R pipe operator `|>`
+- Use `snake_case` for all function and variable names
+- Handle errors with `tryCatch()`
+- Keep `app.R` focused on UI/server; put logic in `R/*.R` modules
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ANTHROPIC_API_KEY` | Yes | -- | Anthropic API key |
+| `DB_PATH` | No | `data/sample.sqlite` | Path to database file |
+| `CLAUDE_MODEL` | No | `claude-sonnet-4-20250514` | Claude model ID |
+| `DB_TYPE` | No | `sqlite` | `sqlite` or `adbc` |
+| `ADBC_DRIVER` | No | -- | ADBC driver name |
+| `ADBC_URI` | No | -- | ADBC connection URI |
+
+## Running Locally
+
+```bash
+cp .Renviron.example .Renviron
+# Edit .Renviron and set ANTHROPIC_API_KEY
+Rscript -e "renv::restore()"       # Install locked package versions
+Rscript data/create_db.R
+Rscript -e "shiny::runApp()"
+```
+
+## Package Management
+
+This project uses renv with "explicit" snapshot type -- it reads the
+`Imports` field of `DESCRIPTION` to determine which packages to lock.
+
+- After adding a new package: add it to DESCRIPTION Imports, run
+  `renv::install("pkg")`, then `renv::snapshot()`
+- After updating a package: run `renv::update("pkg")`, then
+  `renv::snapshot()`
+- Commit `renv.lock` to git after any snapshot
+
+## Key Packages
+
+| Package | Purpose |
+|---------|---------|
+| shiny | Core reactive web framework |
+| bslib | Bootstrap 5 theming and layout |
+| shinychat | Chat UI widget with streaming |
+| ellmer | LLM communication (Claude) with tool use |
+| DBI | Database interface |
+| RSQLite | SQLite driver |
+| reactable | Interactive data tables |
+| jsonlite | JSON serialisation for tool results |
